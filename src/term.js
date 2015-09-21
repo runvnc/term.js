@@ -1520,6 +1520,7 @@ Terminal.prototype.write = function(data) {
   for (; i < l; i++, this.lch = ch) {
     ch = data[i];
     switch (this.state) {
+      case web:
       case normal:
         switch (ch) {
           // '\0'
