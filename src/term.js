@@ -1620,12 +1620,10 @@ Terminal.prototype.write = function(data) {
           // ESC 5 Turn on HTML support (stop escaping HTML tag chars <> etc.)
           case '5':
             this.state = web;
-            alert('web');
             break;
           // ESC 6 Turn off HTML support (escape HTML tags < > etc.)
           case '6':
             this.state = normal;
-            alert('normal');
             break;
           // ESC [ Control Sequence Introducer ( CSI is 0x9b).
           case '[':
