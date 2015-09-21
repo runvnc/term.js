@@ -1521,6 +1521,14 @@ Terminal.prototype.write = function(data) {
     ch = data[i];
     switch (this.state) {
       case web:
+        if (ch == '\x1b') {
+          this.state = escaped;
+        } else {
+          this.lines[this.y + this.ybase][this.x] = [this.curAttr, ch];
+          this.x++;
+          this.updateRange(this.y);
+        }
+        break;
       case normal:
         switch (ch) {
           // '\0'
