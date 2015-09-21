@@ -1285,6 +1285,8 @@ Terminal.prototype.refresh = function(start, end) {
     end = this.lines.length - 1;
   }
 
+  if (this.state == web) end = this.lines.length-1;
+
   for (; y <= end; y++) {
     row = y + this.ydisp;
 
@@ -1304,7 +1306,11 @@ Terminal.prototype.refresh = function(start, end) {
     i = 0;
 
     for (; i < width; i++) {
+      try {
       data = line[i][0];
+      } catch (e) {
+        continue;
+      }
       ch = line[i][1];
 
       if (i === x) data = -1;
@@ -1316,7 +1322,11 @@ Terminal.prototype.refresh = function(start, end) {
         if (data !== this.defAttr) {
           if (data === -1) {
             out += '<span class="reverse-video terminal-cursor">';
+          } else if (data == -9999) { 
+            out += ch;
+            continue;
           } else {
+            
             out += '<span style="';
 
             bg = data & 0x1ff;
@@ -1411,7 +1421,7 @@ Terminal.prototype.refresh = function(start, end) {
       out += '</span>';
     }
 
-    this.children[y].innerHTML = out;
+    $(this.children[y]).html(out);
   }
 
   if (parent) parent.appendChild(this.element);
@@ -1449,6 +1459,8 @@ Terminal.prototype.refreshBlink = function() {
 };
 
 Terminal.prototype.scroll = function() {
+  if (this.state == web) return;
+
   var row;
 
   if (++this.ybase === this.scrollback) {
@@ -1500,7 +1512,15 @@ Terminal.prototype.scrollDisp = function(disp) {
   this.refresh(0, this.rows - 1);
 };
 
+Terminal.prototype.showHtml = function() {
+  console.log('showHtml()', this.html);
+  this.children[this.children.length-2].innerHTML += "<div>"+this.html+"</div>";
+  this.state = normal;
+}
+
+
 Terminal.prototype.write = function(data) {
+
   var l = data.length
     , i = 0
     , j
@@ -1521,12 +1541,14 @@ Terminal.prototype.write = function(data) {
     ch = data[i];
     switch (this.state) {
       case web:
-        if (ch == '\x1b') {
-          this.state = escaped;
-        } else {
-          this.lines[this.y + this.ybase][this.x] = [this.curAttr, ch];
+        if (ch == '\x1b' && data[i+1]=='6') {
+          this.state = normal;
           this.x++;
-          this.updateRange(this.y);
+          continue;
+        } else {
+          var currData = this.lines[this.y+this.ybase][this.x][1];
+          this.lines[this.y + this.ybase][this.x] = [-9999, currData+ch.toString()];
+          continue;
         }
         break;
       case normal:
@@ -1597,7 +1619,7 @@ Terminal.prototype.write = function(data) {
                 ch = this.charset[ch];
               }
 
-              if (this.x >= this.cols) {
+              if (!(this.state==web) && this.x >= this.cols) {
                 this.x = 0;
                 this.y++;
                 if (this.y > this.scrollBottom) {
@@ -1612,7 +1634,7 @@ Terminal.prototype.write = function(data) {
 
               if (isWide(ch)) {
                 j = this.y + this.ybase;
-                if (this.cols < 2 || this.x >= this.cols) {
+                if (!(this.state==web) && this.cols < 2 || this.x >= this.cols) {
                   this.lines[j][this.x - 1] = [this.curAttr, ' '];
                   break;
                 }
@@ -1628,6 +1650,7 @@ Terminal.prototype.write = function(data) {
           // ESC 5 Turn on HTML support (stop escaping HTML tag chars <> etc.)
           case '5':
             this.state = web;
+            this.html = '';
             break;
           // ESC 6 Turn off HTML support (escape HTML tags < > etc.)
           case '6':
@@ -1673,6 +1696,7 @@ Terminal.prototype.write = function(data) {
           // ESC E Next Line ( NEL is 0x85).
           // ESC D Index ( IND is 0x84).
           case 'E':
+            if (!this.state==web)
             this.x = 0;
             ;
           case 'D':
