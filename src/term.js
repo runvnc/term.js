@@ -173,6 +173,7 @@ var normal = 0
   , charset = 4
   , dcs = 5
   , ignore = 6
+  , web = 7
   , UDK = { type: 'udk' };
 
 /**
@@ -1385,17 +1386,17 @@ Terminal.prototype.refresh = function(start, end) {
 
       switch (ch) {
         case '&':
-          out += '&amp;';
+          if (this.state != web) out += '&amp;'; else out += ch;
           break;
         case '<':
-          out += '&lt;';
+          if (this.state != web) out += '&lt;'; else out += ch;
           break;
         case '>':
-          out += '&gt;';
+          if (this.state != web) out += '&gt;'; else out += ch;
           break;
         default:
           if (ch <= ' ') {
-            out += '&nbsp;';
+            if (this.state != web) out += '&nbsp;'; else out += ch;
           } else {
             if (isWide(ch)) i++;
             out += ch;
@@ -1615,6 +1616,14 @@ Terminal.prototype.write = function(data) {
         break;
       case escaped:
         switch (ch) {
+          // ESC 5 Turn on HTML support (stop escaping HTML tag chars <> etc.)
+          case '5':
+            this.state = web;
+            break;
+          // ESC 6 Turn off HTML support (escape HTML tags < > etc.)
+          case '6':
+            this.state = normal;
+            break;
           // ESC [ Control Sequence Introducer ( CSI is 0x9b).
           case '[':
             this.params = [];
