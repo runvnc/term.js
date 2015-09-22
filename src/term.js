@@ -1285,7 +1285,7 @@ Terminal.prototype.refresh = function(start, end) {
     end = this.lines.length - 1;
   }
 
-  if (this.state == web) end = this.lines.length-1;
+  //if (this.state == web) end = this.lines.length-1;
 
   for (; y <= end; y++) {
     row = y + this.ydisp;
@@ -1543,7 +1543,7 @@ Terminal.prototype.write = function(data) {
       case web:
         if (ch == '\x1b' && data[i+1]=='6') {
           this.state = normal;
-          this.x++;
+          this.x+=2;
           continue;
         } else {
           var currData = this.lines[this.y+this.ybase][this.x][1];
