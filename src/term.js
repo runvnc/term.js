@@ -1543,7 +1543,12 @@ Terminal.prototype.write = function(data) {
       case web:
         if (ch == '\x1b' && data[i+1]=='6') {
           this.state = normal;
-          this.x+=2;
+          this.x++;
+          i++;
+          var slf = this;          
+          //setTimeout(function() {
+          //  $(slf.element).animate({ scrollTop: $(slf.element)[0].scrollHeight}, 300);
+          //},170);
           continue;
         } else {
           var currData = this.lines[this.y+this.ybase][this.x][1];
@@ -1651,6 +1656,8 @@ Terminal.prototype.write = function(data) {
           case '5':
             this.state = web;
             this.html = '';
+            //$(this.element).css('height', $(this.element).height());
+            //$(this.element).css('overflow-y', 'auto');
             break;
           // ESC 6 Turn off HTML support (escape HTML tags < > etc.)
           case '6':
